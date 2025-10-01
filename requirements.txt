@@ -1,0 +1,11 @@
+discord.py==2.2.3
+requests
+Flask
+yfinance
+requests
+discord.py
+yfinance
+pandas
+numpy
+requests
+discord.py
