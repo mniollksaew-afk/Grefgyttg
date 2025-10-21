@@ -24,7 +24,6 @@ local EconomyRemote = EconomyGui.ClientHandler.RemoteEvent
 
 -- Locations
 local FARM_POSITION = Vector3.new(4547.98828, 388.356171, -1488.61279)
-local FARM_CFRAME = CFrame.new(4547.98828, 388.356171, -1488.61279, -0.219121814, 9.00142823e-08, -0.975697517, 3.31194316e-09, 1, 9.15125469e-08, 0.975697517, 1.68209411e-08, -0.219121814)
 
 -- Game objects
 local HoneyCombProcess = workspace.AMain.HoneyCombProcess
@@ -34,18 +33,8 @@ local JobHoneyCombs = workspace.JOB.JOB.SCRIPT.HoneyComb
 -- State variables
 local isRunning = false
 local isProcessing = false
-local collectedHoneyCombs = {}
 
 -- Utility functions
-local function waitForChild(parent, childName, timeout)
-    timeout = timeout or 10
-    local startTime = tick()
-    while not parent:FindFirstChild(childName) and (tick() - startTime) < timeout do
-        wait(0.1)
-    end
-    return parent:FindFirstChild(childName)
-end
-
 local function teleportTo(position)
     if RootPart then
         RootPart.CFrame = CFrame.new(position)
@@ -86,16 +75,6 @@ local function getBagCapacity()
     return tonumber(current) or 0, tonumber(max) or 60
 end
 
-local function isBagFull()
-    local current, max = getBagCapacity()
-    return current >= max
-end
-
-local function isHoneyCombFull()
-    local current, max = getHoneyCombCount()
-    return current >= max
-end
-
 -- Auto-farm detection
 local function isAutoFarmActive()
     return AutoFarmGui.Visible
@@ -107,13 +86,8 @@ local function collectHoneyComb(honeyComb)
         return false
     end
     
-    -- Walk to honey comb
     walkTo(honeyComb.Position)
-    
-    -- Fire proximity prompt
     fireProximityPrompt(honeyComb)
-    
-    -- Wait a bit for collection
     wait(1)
     
     return true
@@ -144,21 +118,17 @@ local function processHoneyCombs()
     
     isProcessing = true
     
-    -- Teleport to processing location
     teleportTo(HoneyCombProcess.Position)
     wait(1)
     
-    -- Fire proximity prompt
     fireProximityPrompt(HoneyCombProcess)
     
-    -- Wait for processing GUI to appear
     local startTime = tick()
     while not ProcessGui.Visible and (tick() - startTime) < 10 do
         wait(0.1)
     end
     
     if ProcessGui.Visible then
-        -- Wait for processing to complete (honey combs to disappear from inventory)
         while getHoneyCombCount() > 0 do
             wait(0.5)
         end
@@ -185,15 +155,12 @@ end
 local function sellHoney()
     local honeyCount = getProcessedHoneyCount()
     if honeyCount > 0 then
-        -- Teleport to economy marker
         teleportTo(EconomyMarker.Position)
         wait(1)
         
-        -- Fire proximity prompt
         fireProximityPrompt(EconomyMarker)
         wait(1)
         
-        -- Sell honey
         local args = {
             [1] = "Seller",
             [2] = "Honey",
@@ -211,14 +178,11 @@ local function checkAndSell()
     if currentWeight >= maxWeight then
         print("Bag is full, managing inventory...")
         
-        -- If weight exceeds capacity, deposit items first
         if currentWeight > maxWeight then
             depositItems()
         end
         
-        -- Then sell honey
         sellHoney()
-        
         return true
     end
     
@@ -239,7 +203,6 @@ local function farmHoneyCombs()
         return
     end
     
-    -- Find and collect nearest honey comb
     local nearestHoneyComb = findNearestHoneyComb()
     if nearestHoneyComb then
         print("Collecting honey comb...")
@@ -252,22 +215,17 @@ end
 -- Main automation loop
 local function mainLoop()
     while isRunning do
-        -- Check if we need to sell
         if checkAndSell() then
             wait(2)
         else
-            -- Teleport to farm location
             teleportTo(FARM_POSITION)
             wait(1)
             
-            -- Check honey comb count
             local current, max = getHoneyCombCount()
             
             if current >= max then
-                -- Process honey combs
                 processHoneyCombs()
             else
-                -- Farm honey combs
                 farmHoneyCombs()
             end
         end
@@ -286,14 +244,12 @@ local function startAutomation()
     isRunning = true
     print("Starting honey farming automation...")
     
-    -- Stop auto-farm if it's running
     if isAutoFarmActive() then
         local args = {[1] = "Stop"}
         FarmRemote:FireServer(unpack(args))
         wait(1)
     end
     
-    -- Start main loop
     spawn(mainLoop)
 end
 
@@ -302,7 +258,7 @@ local function stopAutomation()
     print("Stopping honey farming automation...")
 end
 
--- GUI Creation (optional - for manual control)
+-- GUI Creation
 local function createControlGUI()
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "HoneyFarmControl"
@@ -353,13 +309,5 @@ end
 -- Initialize
 createControlGUI()
 
--- Auto-start (optional)
--- startAutomation()
-
 print("Honey Farming Automation Script Loaded!")
 print("Use the GUI to start/stop the automation.")
-print("The script will automatically:")
-print("- Check bag capacity and sell when full")
-print("- Farm honey combs when inventory is not full")
-print("- Process honey combs when inventory reaches 30/30")
-print("- Handle weight management and proximity prompts")
