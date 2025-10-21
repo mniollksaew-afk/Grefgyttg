@@ -255,25 +255,23 @@ local function mainLoop()
         -- Check if we need to sell
         if checkAndSell() then
             wait(2)
-            goto continue
-        end
-        
-        -- Teleport to farm location
-        teleportTo(FARM_POSITION)
-        wait(1)
-        
-        -- Check honey comb count
-        local current, max = getHoneyCombCount()
-        
-        if current >= max then
-            -- Process honey combs
-            processHoneyCombs()
         else
-            -- Farm honey combs
-            farmHoneyCombs()
+            -- Teleport to farm location
+            teleportTo(FARM_POSITION)
+            wait(1)
+            
+            -- Check honey comb count
+            local current, max = getHoneyCombCount()
+            
+            if current >= max then
+                -- Process honey combs
+                processHoneyCombs()
+            else
+                -- Farm honey combs
+                farmHoneyCombs()
+            end
         end
         
-        ::continue::
         wait(1)
     end
 end
